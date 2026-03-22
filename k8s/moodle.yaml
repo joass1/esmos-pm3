@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: moodle
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: moodle
+  template:
+    metadata:
+      labels:
+        app: moodle
+    spec:
+      containers:
+        - name: moodle
+          image: ellakcy/moodle:mysql_maria_apache_latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: MOODLE_URL
+              value: "http://localhost/moodle"
+            - name: MOODLE_DB_HOST
+              value: moodle-db
+            - name: MOODLE_DB_NAME
+              value: moodle
+            - name: MOODLE_DB_TYPE
+              value: mariadb
+            - name: MOODLE_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: moodle-db-secret
+                  key: MYSQL_USER
+            - name: MOODLE_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: moodle-db-secret
+                  key: MYSQL_PASSWORD
+            - name: MOODLE_ADMIN
+              value: admin
+            - name: MOODLE_ADMIN_PASSWORD
+              value: "Admin123!"
+          volumeMounts:
+            - name: moodle-data
+              mountPath: /var/moodledata
+      volumes:
+        - name: moodle-data
+          persistentVolumeClaim:
+            claimName: moodle-data-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: moodle
+  namespace: production
+spec:
+  selector:
+    app: moodle
+  ports:
+    - port: 80
+      targetPort: 80

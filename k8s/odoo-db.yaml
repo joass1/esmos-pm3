@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: odoo-db
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: odoo-db
+  template:
+    metadata:
+      labels:
+        app: odoo-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: odoo-db-secret
+          volumeMounts:
+            - name: odoo-db-data
+              mountPath: /var/lib/postgresql/data
+              subPath: pgdata
+      volumes:
+        - name: odoo-db-data
+          persistentVolumeClaim:
+            claimName: odoo-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: odoo-db
+  namespace: production
+spec:
+  selector:
+    app: odoo-db
+  ports:
+    - port: 5432
+      targetPort: 5432

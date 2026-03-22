@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: moodle-db
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: moodle-db
+  template:
+    metadata:
+      labels:
+        app: moodle-db
+    spec:
+      containers:
+        - name: mariadb
+          image: mariadb:10.11
+          ports:
+            - containerPort: 3306
+          envFrom:
+            - secretRef:
+                name: moodle-db-secret
+          volumeMounts:
+            - name: moodle-db-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: moodle-db-data
+          persistentVolumeClaim:
+            claimName: moodle-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: moodle-db
+  namespace: production
+spec:
+  selector:
+    app: moodle-db
+  ports:
+    - port: 3306
+      targetPort: 3306

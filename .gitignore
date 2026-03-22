@@ -1,0 +1,10 @@
+# Environment files
+docker-compose/.env
+.env
+
+# Planning and local files
+.planning/
+.claude/
+
+# Deployment guide (local only)
+esmos-deployment-guide-v2.md
