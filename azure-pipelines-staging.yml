@@ -7,7 +7,7 @@ trigger:
       - main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  name: 'Default'
 
 variables:
   stagingVM: '4.193.210.105'
