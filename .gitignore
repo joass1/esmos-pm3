@@ -1,4 +1,4 @@
-# Environment files
+# Environment files with real credentials
 docker-compose/.env
 .env
 
@@ -6,5 +6,9 @@ docker-compose/.env
 .planning/
 .claude/
 
-# Deployment guide (local only)
-esmos-deployment-guide-v2.md
+# Python
+*.pyc
+__pycache__/
+
+# OS files
+.DS_Store

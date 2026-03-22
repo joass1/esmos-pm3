@@ -1,0 +1,72 @@
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: esmos-nginx
+    ports: ["80:80"]
+    volumes: ["./nginx/nginx.conf:/etc/nginx/nginx.conf:ro"]
+    depends_on: [odoo, moodle]
+    restart: unless-stopped
+    networks: [esmos-net]
+
+  odoo:
+    image: ${ACR_LOGIN_SERVER}/esmos-odoo:v1
+    container_name: esmos-odoo
+    depends_on: [odoo-db]
+    environment:
+      - HOST=odoo-db
+      - PORT=5432
+      - USER=${ODOO_DB_USER}
+      - PASSWORD=${ODOO_DB_PASSWORD}
+    volumes: [odoo-filestore:/var/lib/odoo]
+    restart: unless-stopped
+    networks: [esmos-net]
+
+  odoo-db:
+    image: postgres:16-alpine
+    container_name: esmos-odoo-db
+    environment:
+      - POSTGRES_USER=${ODOO_DB_USER}
+      - POSTGRES_PASSWORD=${ODOO_DB_PASSWORD}
+      - POSTGRES_DB=postgres
+    volumes: [odoo-db-data:/var/lib/postgresql/data]
+    restart: unless-stopped
+    networks: [esmos-net]
+
+  moodle:
+    image: ellakcy/moodle:mysql_maria_apache_latest
+    container_name: esmos-moodle
+    depends_on: [moodle-db]
+    environment:
+      - MOODLE_URL=http://${STAGING_IP}:8080
+      - MOODLE_DB_HOST=moodle-db
+      - MOODLE_DB_NAME=moodle
+      - MOODLE_DB_USER=${MOODLE_DB_USER}
+      - MOODLE_DB_PASSWORD=${MOODLE_DB_PASSWORD}
+      - MOODLE_DB_TYPE=mariadb
+      - MOODLE_ADMIN=${MOODLE_ADMIN_USER}
+      - MOODLE_ADMIN_PASSWORD=${MOODLE_ADMIN_PASSWORD}
+    volumes: [moodle-data:/var/moodledata]
+    ports: ["8080:80"]
+    restart: unless-stopped
+    networks: [esmos-net]
+
+  moodle-db:
+    image: mariadb:10.11
+    container_name: esmos-moodle-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MOODLE_DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=moodle
+      - MYSQL_USER=${MOODLE_DB_USER}
+      - MYSQL_PASSWORD=${MOODLE_DB_PASSWORD}
+    volumes: [moodle-db-data:/var/lib/mysql]
+    restart: unless-stopped
+    networks: [esmos-net]
+
+networks:
+  esmos-net:
+
+volumes:
+  odoo-filestore:
+  odoo-db-data:
+  moodle-data:
+  moodle-db-data:
