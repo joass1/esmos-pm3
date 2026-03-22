@@ -1,0 +1,47 @@
+trigger:
+  branches:
+    include:
+      - staging
+    exclude:
+      - production
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  stagingVM: '4.193.210.105'
+  stagingUser: 'esmos'
+  sshServiceConnection: 'esmos-staging-vm-ssh'
+
+stages:
+  - stage: DeployStaging
+    displayName: 'Deploy to Staging VM'
+    jobs:
+      - job: DeployDockerCompose
+        displayName: 'Update and restart Docker Compose'
+        steps:
+          - task: CopyFilesOverSSH@0
+            displayName: 'Copy docker-compose files to staging VM'
+            inputs:
+              sshEndpoint: '$(sshServiceConnection)'
+              sourceFolder: '$(Build.SourcesDirectory)/docker-compose'
+              contents: |
+                docker-compose.yml
+                .env.example
+                nginx/**
+              targetFolder: '/home/$(stagingUser)/esmos-staging'
+              overwrite: true
+
+          - task: SSH@0
+            displayName: 'Pull images and restart containers'
+            inputs:
+              sshEndpoint: '$(sshServiceConnection)'
+              runOptions: 'inline'
+              inline: |
+                cd ~/esmos-staging
+                docker compose pull
+                docker compose down
+                docker compose up -d
+                sleep 10
+                docker compose ps

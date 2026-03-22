@@ -1,0 +1,35 @@
+trigger:
+  branches:
+    include:
+      - production
+    exclude:
+      - staging
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureSubscription: 'esmos-azure-connection'
+  resourceGroup: 'esmos-pm3-rg'
+  aksCluster: 'esmos-prod-cluster'
+
+stages:
+  - stage: DeployProduction
+    displayName: 'Deploy to AKS Production'
+    jobs:
+      - job: DeployKubernetes
+        displayName: 'Apply K8s manifests to AKS'
+        steps:
+          - task: AzureCLI@2
+            displayName: 'Get AKS credentials and deploy'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                az aks get-credentials --resource-group $(resourceGroup) --name $(aksCluster) --overwrite-existing
+                kubectl apply -f k8s/ -n production
+                sleep 15
+                kubectl get pods -n production
+                kubectl get ingress -n production
