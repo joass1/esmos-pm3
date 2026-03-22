@@ -12,7 +12,7 @@ pool:
 variables:
   stagingVM: '4.193.210.105'
   stagingUser: 'esmos'
-  sshServiceConnection: 'esmos-staging-vm-ssh'
+  sshServiceConnection: 'ssh-esmos-staging'
 
 stages:
   - stage: DeployStaging
